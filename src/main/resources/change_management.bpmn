@@ -1,0 +1,769 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.48.0">
+  <bpmn:collaboration id="Collaboration_1">
+    <bpmn:participant id="Participant_1" name="Proces upravljanja promenama" processRef="changeManagement" />
+  </bpmn:collaboration>
+  <bpmn:process id="changeManagement" name="Proces upravljanja promenama" isExecutable="true" camunda:historyTimeToLive="180">
+    <bpmn:laneSet id="LaneSet_1">
+      <bpmn:lane id="Lane_Validate" name="Validator">
+        <bpmn:flowNodeRef>notifyCompleted</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_Completed</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>validate</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_ValidationResult</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Approver" name="Odobravalac promene">
+        <bpmn:flowNodeRef>authorize</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_AuthorizationDecision</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_DevOps" name="DevOps">
+        <bpmn:flowNodeRef>peerReview</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>planImplementation</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>implement</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>backout</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_ImplementSuccess</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Join_Implement</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_CCB" name="Odbor za kontrolu promena">
+        <bpmn:flowNodeRef>EndEvent_Rejected</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>notifyRejected</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Join_CCBMeeting</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_CCBDecide</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_CCBDecision</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Join_Rejected</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_SMT" name="Tim za upravljanje uslugama">
+        <bpmn:flowNodeRef>consultSMT</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>notifyBackedOut</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_SMTReview</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>preCCBMeeting</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Join_PreCCB</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_PreCCBDecision</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_BackedOut</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_FailureDecision</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>initialReview</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_1gi5bku</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Join_Consult</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Requester" name="Podnosilac zahteva">
+        <bpmn:flowNodeRef>StartEvent_1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>reviseRequest</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>changeRequest</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>registerChange</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="StartEvent_1" name="Start">
+      <bpmn:outgoing>Flow_1an9czc</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:endEvent id="EndEvent_Rejected" name="Promena Odbijena">
+      <bpmn:incoming>Flow_rejEnd</bpmn:incoming>
+      <bpmn:terminateEventDefinition id="TerminateEventDefinition_Rejected" />
+    </bpmn:endEvent>
+    <bpmn:userTask id="peerReview" name="Tehnicki pregled" camunda:formKey="camunda-forms:/forms/peer_review.form" camunda:candidateGroups="devops">
+      <bpmn:incoming>Flow_13</bpmn:incoming>
+      <bpmn:outgoing>Flow_14</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="authorize" name="Autorizacija promene" camunda:formKey="camunda-forms:/forms/authorize.form" camunda:candidateGroups="approver">
+      <bpmn:incoming>Flow_14</bpmn:incoming>
+      <bpmn:outgoing>Flow_15</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_AuthorizationDecision" name="Autorizacija odobrena?" default="Flow_auth_reject">
+      <bpmn:incoming>Flow_15</bpmn:incoming>
+      <bpmn:outgoing>Flow_auth_ok</bpmn:outgoing>
+      <bpmn:outgoing>Flow_auth_reject</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="notifyRejected" name="Obavesti podnosioca (odbijeno)" camunda:delegateExpression="${notifyRequester}">
+      <bpmn:extensionElements>
+        <camunda:field name="outcome">
+          <camunda:string>rejected</camunda:string>
+        </camunda:field>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_join_rejected</bpmn:incoming>
+      <bpmn:outgoing>Flow_rejEnd</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="notifyCompleted" name="Obavesti podnosioca (zavrseno)" camunda:delegateExpression="${notifyRequester}">
+      <bpmn:extensionElements>
+        <camunda:field name="outcome">
+          <camunda:string>completed</camunda:string>
+        </camunda:field>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_val_ok</bpmn:incoming>
+      <bpmn:outgoing>Flow_compEnd</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="consultSMT" name="Konsultacije sa timom za upravljanje uslugama" camunda:formKey="camunda-forms:/forms/consult_smt.form" camunda:candidateGroups="smt">
+      <bpmn:incoming>Flow_join_consult</bpmn:incoming>
+      <bpmn:outgoing>Flow_consult</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="notifyBackedOut" name="Obavesti podnosioca (odustanak)" camunda:delegateExpression="${notifyRequester}">
+      <bpmn:extensionElements>
+        <camunda:field name="outcome">
+          <camunda:string>backedOut</camunda:string>
+        </camunda:field>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_backout</bpmn:incoming>
+      <bpmn:outgoing>Flow_19</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="reviseRequest" name="Dorada zahteva za promenu" camunda:formKey="camunda-forms:/forms/revise_request.form" camunda:candidateGroups="requester">
+      <bpmn:incoming>Flow_smt_rework</bpmn:incoming>
+      <bpmn:outgoing>Flow_reworkBack</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_SMTReview" name="Odluka SMT-a" default="Flow_smt_rework">
+      <bpmn:incoming>Flow_3</bpmn:incoming>
+      <bpmn:outgoing>Flow_smt_proceed</bpmn:outgoing>
+      <bpmn:outgoing>Flow_smt_reject</bpmn:outgoing>
+      <bpmn:outgoing>Flow_smt_hold</bpmn:outgoing>
+      <bpmn:outgoing>Flow_smt_rework</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="preCCBMeeting" name="Pre-CCB sastanak" camunda:formKey="camunda-forms:/forms/pre_ccb.form" camunda:candidateGroups="smt">
+      <bpmn:extensionElements>
+        <camunda:executionListener delegateExpression="${updateChangeStatus}" event="start">
+          <camunda:field name="status">
+            <camunda:string>PRE_CCB_REVIEW</camunda:string>
+          </camunda:field>
+        </camunda:executionListener>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_join_preccb</bpmn:incoming>
+      <bpmn:outgoing>Flow_7</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Join_PreCCB">
+      <bpmn:incoming>Flow_smt_proceed</bpmn:incoming>
+      <bpmn:incoming>Flow_preccb_hold</bpmn:incoming>
+      <bpmn:outgoing>Flow_join_preccb</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="Gateway_PreCCBDecision" name="Odluka pre-CCB" default="Flow_preccb_hold">
+      <bpmn:incoming>Flow_7</bpmn:incoming>
+      <bpmn:outgoing>Flow_preccb_proceed</bpmn:outgoing>
+      <bpmn:outgoing>Flow_preccb_reject</bpmn:outgoing>
+      <bpmn:outgoing>Flow_preccb_hold</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="Join_CCBMeeting">
+      <bpmn:incoming>Flow_preccb_proceed</bpmn:incoming>
+      <bpmn:incoming>Flow_10_hold</bpmn:incoming>
+      <bpmn:outgoing>Flow_7b</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="Task_CCBDecide" name="CCB Sastanak" camunda:formKey="camunda-forms:/forms/ccb_decision.form" camunda:candidateGroups="ccb">
+      <bpmn:extensionElements>
+        <camunda:executionListener delegateExpression="${updateChangeStatus}" event="start">
+          <camunda:field name="status">
+            <camunda:string>CCB_REVIEW</camunda:string>
+          </camunda:field>
+        </camunda:executionListener>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_7b</bpmn:incoming>
+      <bpmn:outgoing>Flow_8b</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_CCBDecision" name="CCB Odluka" default="Flow_10_hold">
+      <bpmn:incoming>Flow_8b</bpmn:incoming>
+      <bpmn:outgoing>Flow_9_approved</bpmn:outgoing>
+      <bpmn:outgoing>Flow_10_hold</bpmn:outgoing>
+      <bpmn:outgoing>Flow_11_rejected</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="planImplementation" name="Implementacioni plan" camunda:formKey="camunda-forms:/forms/plan_implementation.form" camunda:candidateGroups="devops">
+      <bpmn:extensionElements>
+        <camunda:executionListener delegateExpression="${updateChangeStatus}" event="start">
+          <camunda:field name="status">
+            <camunda:string>APPROVED</camunda:string>
+          </camunda:field>
+        </camunda:executionListener>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_9_approved</bpmn:incoming>
+      <bpmn:outgoing>Flow_13</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="implement" name="Implementacija promene" camunda:formKey="camunda-forms:/forms/implement.form" camunda:candidateGroups="devops">
+      <bpmn:incoming>Flow_join_implement</bpmn:incoming>
+      <bpmn:outgoing>Flow_16b</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="EndEvent_BackedOut" name="Odustanak od promene">
+      <bpmn:incoming>Flow_19</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="EndEvent_Completed" name="Promena zavrsena">
+      <bpmn:incoming>Flow_compEnd</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:userTask id="backout" name="Povlacenje promene" camunda:formKey="camunda-forms:/forms/change_info.form" camunda:candidateGroups="devops">
+      <bpmn:incoming>Flow_fail_backout</bpmn:incoming>
+      <bpmn:outgoing>Flow_backout</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="validate" name="Validacija promene" camunda:formKey="camunda-forms:/forms/validate.form" camunda:candidateGroups="validator">
+      <bpmn:extensionElements>
+        <camunda:executionListener delegateExpression="${updateChangeStatus}" event="start">
+          <camunda:field name="status">
+            <camunda:string>IMPLEMENTED</camunda:string>
+          </camunda:field>
+        </camunda:executionListener>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_17_yes</bpmn:incoming>
+      <bpmn:outgoing>Flow_20</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_ImplementSuccess" name="Uspesno?" default="Flow_18_no">
+      <bpmn:incoming>Flow_16b</bpmn:incoming>
+      <bpmn:outgoing>Flow_17_yes</bpmn:outgoing>
+      <bpmn:outgoing>Flow_18_no</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="Gateway_ValidationResult" name="Validacija uspesna?" default="Flow_val_fail">
+      <bpmn:incoming>Flow_20</bpmn:incoming>
+      <bpmn:outgoing>Flow_val_ok</bpmn:outgoing>
+      <bpmn:outgoing>Flow_val_fail</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="Gateway_FailureDecision" name="Odluka o neuspehu" default="Flow_fail_backout">
+      <bpmn:incoming>Flow_consult</bpmn:incoming>
+      <bpmn:outgoing>Flow_fail_retry</bpmn:outgoing>
+      <bpmn:outgoing>Flow_fail_backout</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="initialReview" name="Pregled promene" camunda:formKey="camunda-forms:/forms/smt_review.form" camunda:candidateGroups="smt">
+      <bpmn:extensionElements>
+        <camunda:executionListener delegateExpression="${updateChangeStatus}" event="start">
+          <camunda:field name="status">
+            <camunda:string>UNDER_REVIEW</camunda:string>
+          </camunda:field>
+        </camunda:executionListener>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1c6a2ei</bpmn:incoming>
+      <bpmn:outgoing>Flow_3</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="changeRequest" name="Zahtev za promenu" camunda:formKey="camunda-forms:/forms/change_request.form" camunda:candidateGroups="requester">
+      <bpmn:extensionElements />
+      <bpmn:incoming>Flow_1an9czc</bpmn:incoming>
+      <bpmn:outgoing>Flow_0y4kpju</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="registerChange" name="Registracija promene" camunda:delegateExpression="${registerChange}">
+      <bpmn:incoming>Flow_0y4kpju</bpmn:incoming>
+      <bpmn:outgoing>Flow_reg</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="Gateway_1gi5bku">
+      <bpmn:incoming>Flow_reg</bpmn:incoming>
+      <bpmn:incoming>Flow_reworkBack</bpmn:incoming>
+      <bpmn:incoming>Flow_smt_hold</bpmn:incoming>
+      <bpmn:outgoing>Flow_1c6a2ei</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="Join_Rejected">
+      <bpmn:incoming>Flow_11_rejected</bpmn:incoming>
+      <bpmn:incoming>Flow_smt_reject</bpmn:incoming>
+      <bpmn:incoming>Flow_preccb_reject</bpmn:incoming>
+      <bpmn:incoming>Flow_auth_reject</bpmn:incoming>
+      <bpmn:outgoing>Flow_join_rejected</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="Join_Consult">
+      <bpmn:incoming>Flow_18_no</bpmn:incoming>
+      <bpmn:incoming>Flow_val_fail</bpmn:incoming>
+      <bpmn:outgoing>Flow_join_consult</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="Join_Implement">
+      <bpmn:incoming>Flow_auth_ok</bpmn:incoming>
+      <bpmn:incoming>Flow_fail_retry</bpmn:incoming>
+      <bpmn:outgoing>Flow_join_implement</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_1an9czc" sourceRef="StartEvent_1" targetRef="changeRequest" />
+    <bpmn:sequenceFlow id="Flow_rejEnd" sourceRef="notifyRejected" targetRef="EndEvent_Rejected" />
+    <bpmn:sequenceFlow id="Flow_13" sourceRef="planImplementation" targetRef="peerReview" />
+    <bpmn:sequenceFlow id="Flow_14" sourceRef="peerReview" targetRef="authorize" />
+    <bpmn:sequenceFlow id="Flow_15" sourceRef="authorize" targetRef="Gateway_AuthorizationDecision" />
+    <bpmn:sequenceFlow id="Flow_auth_ok" name="Odobreno" sourceRef="Gateway_AuthorizationDecision" targetRef="Join_Implement">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${authorizationApproved == true}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_auth_reject" name="Odbijeno" sourceRef="Gateway_AuthorizationDecision" targetRef="Join_Rejected" />
+    <bpmn:sequenceFlow id="Flow_join_rejected" sourceRef="Join_Rejected" targetRef="notifyRejected" />
+    <bpmn:sequenceFlow id="Flow_val_ok" name="Uspesno" sourceRef="Gateway_ValidationResult" targetRef="notifyCompleted">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${validationSuccessful == true}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_compEnd" sourceRef="notifyCompleted" targetRef="EndEvent_Completed" />
+    <bpmn:sequenceFlow id="Flow_join_consult" sourceRef="Join_Consult" targetRef="consultSMT" />
+    <bpmn:sequenceFlow id="Flow_consult" sourceRef="consultSMT" targetRef="Gateway_FailureDecision" />
+    <bpmn:sequenceFlow id="Flow_backout" sourceRef="backout" targetRef="notifyBackedOut" />
+    <bpmn:sequenceFlow id="Flow_19" sourceRef="notifyBackedOut" targetRef="EndEvent_BackedOut" />
+    <bpmn:sequenceFlow id="Flow_smt_rework" name="Vrati na doradu" sourceRef="Gateway_SMTReview" targetRef="reviseRequest" />
+    <bpmn:sequenceFlow id="Flow_reworkBack" name="Zahtev doradjen" sourceRef="reviseRequest" targetRef="Gateway_1gi5bku">
+      <bpmn:extensionElements>
+        <camunda:executionListener delegateExpression="${updateChangeDetails}" event="take" />
+      </bpmn:extensionElements>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_3" sourceRef="initialReview" targetRef="Gateway_SMTReview" />
+    <bpmn:sequenceFlow id="Flow_smt_reject" name="Odbijeno" sourceRef="Gateway_SMTReview" targetRef="Join_Rejected">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${smtDecision == "reject"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_smt_hold" name="Na cekanju" sourceRef="Gateway_SMTReview" targetRef="Gateway_1gi5bku">
+      <bpmn:extensionElements>
+        <camunda:executionListener delegateExpression="${updateChangeStatus}" event="take">
+          <camunda:field name="status">
+            <camunda:string>ON_HOLD</camunda:string>
+          </camunda:field>
+        </camunda:executionListener>
+      </bpmn:extensionElements>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${smtDecision == "hold"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_smt_proceed" name="Spremno za pre-CCB" sourceRef="Gateway_SMTReview" targetRef="Join_PreCCB">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${smtDecision == "proceed"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_join_preccb" sourceRef="Join_PreCCB" targetRef="preCCBMeeting" />
+    <bpmn:sequenceFlow id="Flow_7" sourceRef="preCCBMeeting" targetRef="Gateway_PreCCBDecision" />
+    <bpmn:sequenceFlow id="Flow_preccb_hold" name="Na cekanju" sourceRef="Gateway_PreCCBDecision" targetRef="Join_PreCCB">
+      <bpmn:extensionElements>
+        <camunda:executionListener delegateExpression="${updateChangeStatus}" event="take">
+          <camunda:field name="status">
+            <camunda:string>ON_HOLD</camunda:string>
+          </camunda:field>
+        </camunda:executionListener>
+      </bpmn:extensionElements>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_preccb_proceed" name="Spremno za CCB" sourceRef="Gateway_PreCCBDecision" targetRef="Join_CCBMeeting">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${preCcbDecision == "proceed"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_preccb_reject" name="Odbijeno" sourceRef="Gateway_PreCCBDecision" targetRef="Join_Rejected">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${preCcbDecision == "reject"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_10_hold" name="Na cekanju" sourceRef="Gateway_CCBDecision" targetRef="Join_CCBMeeting">
+      <bpmn:extensionElements>
+        <camunda:executionListener delegateExpression="${updateChangeStatus}" event="take">
+          <camunda:field name="status">
+            <camunda:string>ON_HOLD</camunda:string>
+          </camunda:field>
+        </camunda:executionListener>
+      </bpmn:extensionElements>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_7b" sourceRef="Join_CCBMeeting" targetRef="Task_CCBDecide" />
+    <bpmn:sequenceFlow id="Flow_8b" sourceRef="Task_CCBDecide" targetRef="Gateway_CCBDecision" />
+    <bpmn:sequenceFlow id="Flow_11_rejected" name="Odbijeno" sourceRef="Gateway_CCBDecision" targetRef="Join_Rejected">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${ccbDecision == "rejected"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_9_approved" name="Odobreno" sourceRef="Gateway_CCBDecision" targetRef="planImplementation">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${ccbDecision == "approved"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_join_implement" sourceRef="Join_Implement" targetRef="implement" />
+    <bpmn:sequenceFlow id="Flow_16b" sourceRef="implement" targetRef="Gateway_ImplementSuccess" />
+    <bpmn:sequenceFlow id="Flow_fail_backout" name="Povuci promenu" sourceRef="Gateway_FailureDecision" targetRef="backout" />
+    <bpmn:sequenceFlow id="Flow_17_yes" name="Da" sourceRef="Gateway_ImplementSuccess" targetRef="validate">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${implementationSuccessful == true}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_20" sourceRef="validate" targetRef="Gateway_ValidationResult" />
+    <bpmn:sequenceFlow id="Flow_18_no" name="Ne" sourceRef="Gateway_ImplementSuccess" targetRef="Join_Consult" />
+    <bpmn:sequenceFlow id="Flow_val_fail" name="Neuspesno" sourceRef="Gateway_ValidationResult" targetRef="Join_Consult" />
+    <bpmn:sequenceFlow id="Flow_fail_retry" name="Ponovi implementaciju" sourceRef="Gateway_FailureDecision" targetRef="Join_Implement">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${failureDecision == "retry"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_1c6a2ei" sourceRef="Gateway_1gi5bku" targetRef="initialReview" />
+    <bpmn:sequenceFlow id="Flow_0y4kpju" sourceRef="changeRequest" targetRef="registerChange" />
+    <bpmn:sequenceFlow id="Flow_reg" sourceRef="registerChange" targetRef="Gateway_1gi5bku" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1">
+      <bpmndi:BPMNShape id="Participant_1_di" bpmnElement="Participant_1" isHorizontal="true">
+        <dc:Bounds x="155" y="60" width="3220" height="960" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Validate_di" bpmnElement="Lane_Validate" isHorizontal="true">
+        <dc:Bounds x="185" y="860" width="3190" height="160" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Approver_di" bpmnElement="Lane_Approver" isHorizontal="true">
+        <dc:Bounds x="185" y="700" width="3190" height="160" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_DevOps_di" bpmnElement="Lane_DevOps" isHorizontal="true">
+        <dc:Bounds x="185" y="540" width="3190" height="160" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_CCB_di" bpmnElement="Lane_CCB" isHorizontal="true">
+        <dc:Bounds x="185" y="380" width="3190" height="160" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_SMT_di" bpmnElement="Lane_SMT" isHorizontal="true">
+        <dc:Bounds x="185" y="220" width="3190" height="160" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Requester_di" bpmnElement="Lane_Requester" isHorizontal="true">
+        <dc:Bounds x="185" y="60" width="3190" height="160" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="222" y="122" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="227" y="163" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Rejected_di" bpmnElement="EndEvent_Rejected">
+        <dc:Bounds x="3182" y="442" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3175" y="483" width="50" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="peerReview_di" bpmnElement="peerReview">
+        <dc:Bounds x="1920" y="580" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="authorize_di" bpmnElement="authorize">
+        <dc:Bounds x="1920" y="740" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_AuthorizationDecision_di" bpmnElement="Gateway_AuthorizationDecision" isMarkerVisible="true">
+        <dc:Bounds x="2100" y="755" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2093" y="810" width="65" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="notifyRejected_di" bpmnElement="notifyRejected">
+        <dc:Bounds x="3000" y="420" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="notifyCompleted_di" bpmnElement="notifyCompleted">
+        <dc:Bounds x="3000" y="900" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="consultSMT_di" bpmnElement="consultSMT">
+        <dc:Bounds x="2680" y="260" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="notifyBackedOut_di" bpmnElement="notifyBackedOut">
+        <dc:Bounds x="3000" y="260" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="reviseRequest_di" bpmnElement="reviseRequest">
+        <dc:Bounds x="820" y="100" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_SMTReview_di" bpmnElement="Gateway_SMTReview" isMarkerVisible="true">
+        <dc:Bounds x="1010" y="275" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="998" y="330" width="75" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="preCCBMeeting_di" bpmnElement="preCCBMeeting">
+        <dc:Bounds x="1200" y="260" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Join_PreCCB_di" bpmnElement="Join_PreCCB" isMarkerVisible="true">
+        <dc:Bounds x="1100" y="275" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_PreCCBDecision_di" bpmnElement="Gateway_PreCCBDecision" isMarkerVisible="true">
+        <dc:Bounds x="1400" y="275" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1382" y="332" width="87" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Join_CCBMeeting_di" bpmnElement="Join_CCBMeeting" isMarkerVisible="true">
+        <dc:Bounds x="1500" y="435" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_CCBDecide_di" bpmnElement="Task_CCBDecide">
+        <dc:Bounds x="1600" y="420" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_CCBDecision_di" bpmnElement="Gateway_CCBDecision" isMarkerVisible="true">
+        <dc:Bounds x="1780" y="435" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1773" y="492" width="65" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="planImplementation_di" bpmnElement="planImplementation">
+        <dc:Bounds x="1740" y="580" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="implement_di" bpmnElement="implement">
+        <dc:Bounds x="2400" y="580" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_BackedOut_di" bpmnElement="EndEvent_BackedOut">
+        <dc:Bounds x="3182" y="282" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3162" y="323" width="77" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Completed_di" bpmnElement="EndEvent_Completed">
+        <dc:Bounds x="3182" y="922" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3175" y="963" width="50" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="backout_di" bpmnElement="backout">
+        <dc:Bounds x="2825" y="580" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="validate_di" bpmnElement="validate">
+        <dc:Bounds x="2680" y="900" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_ImplementSuccess_di" bpmnElement="Gateway_ImplementSuccess" isMarkerVisible="true">
+        <dc:Bounds x="2580" y="595" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2579" y="650" width="53" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_ValidationResult_di" bpmnElement="Gateway_ValidationResult" isMarkerVisible="true">
+        <dc:Bounds x="2860" y="915" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2859" y="970" width="53" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_FailureDecision_di" bpmnElement="Gateway_FailureDecision" isMarkerVisible="true">
+        <dc:Bounds x="2860" y="275" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2858" y="330" width="55" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="initialReview_di" bpmnElement="initialReview">
+        <dc:Bounds x="820" y="260" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="changeRequest_di" bpmnElement="changeRequest">
+        <dc:Bounds x="330" y="100" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="registerChange_di" bpmnElement="registerChange">
+        <dc:Bounds x="520" y="100" width="120" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1gi5bku_di" bpmnElement="Gateway_1gi5bku" isMarkerVisible="true">
+        <dc:Bounds x="655" y="275" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Join_Rejected_di" bpmnElement="Join_Rejected" isMarkerVisible="true">
+        <dc:Bounds x="1980" y="435" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Join_Consult_di" bpmnElement="Join_Consult" isMarkerVisible="true">
+        <dc:Bounds x="2580" y="275" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Join_Implement_di" bpmnElement="Join_Implement" isMarkerVisible="true">
+        <dc:Bounds x="2300" y="595" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1an9czc_di" bpmnElement="Flow_1an9czc">
+        <di:waypoint x="258" y="140" />
+        <di:waypoint x="330" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_rejEnd_di" bpmnElement="Flow_rejEnd">
+        <di:waypoint x="3120" y="460" />
+        <di:waypoint x="3182" y="460" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_13_di" bpmnElement="Flow_13">
+        <di:waypoint x="1860" y="620" />
+        <di:waypoint x="1920" y="620" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_14_di" bpmnElement="Flow_14">
+        <di:waypoint x="1980" y="660" />
+        <di:waypoint x="1980" y="740" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_15_di" bpmnElement="Flow_15">
+        <di:waypoint x="2040" y="780" />
+        <di:waypoint x="2100" y="780" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_auth_ok_di" bpmnElement="Flow_auth_ok">
+        <di:waypoint x="2150" y="780" />
+        <di:waypoint x="2325" y="780" />
+        <di:waypoint x="2325" y="645" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2298" y="762" width="55" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_auth_reject_di" bpmnElement="Flow_auth_reject">
+        <di:waypoint x="2125" y="755" />
+        <di:waypoint x="2125" y="485" />
+        <di:waypoint x="2005" y="485" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2100" y="467" width="50" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_join_rejected_di" bpmnElement="Flow_join_rejected">
+        <di:waypoint x="2030" y="460" />
+        <di:waypoint x="3000" y="460" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_val_ok_di" bpmnElement="Flow_val_ok">
+        <di:waypoint x="2910" y="940" />
+        <di:waypoint x="3000" y="940" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2977" y="922" width="47" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_compEnd_di" bpmnElement="Flow_compEnd">
+        <di:waypoint x="3120" y="940" />
+        <di:waypoint x="3182" y="940" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_join_consult_di" bpmnElement="Flow_join_consult">
+        <di:waypoint x="2630" y="300" />
+        <di:waypoint x="2680" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_consult_di" bpmnElement="Flow_consult">
+        <di:waypoint x="2800" y="300" />
+        <di:waypoint x="2860" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_backout_di" bpmnElement="Flow_backout">
+        <di:waypoint x="2945" y="620" />
+        <di:waypoint x="2980" y="620" />
+        <di:waypoint x="2980" y="300" />
+        <di:waypoint x="3000" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_19_di" bpmnElement="Flow_19">
+        <di:waypoint x="3120" y="300" />
+        <di:waypoint x="3182" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_smt_rework_di" bpmnElement="Flow_smt_rework">
+        <di:waypoint x="1035" y="275" />
+        <di:waypoint x="1035" y="140" />
+        <di:waypoint x="940" y="140" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="992" y="109" width="86" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_reworkBack_di" bpmnElement="Flow_reworkBack">
+        <di:waypoint x="820" y="140" />
+        <di:waypoint x="680" y="140" />
+        <di:waypoint x="680" y="275" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="656" y="109" width="49" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_3_di" bpmnElement="Flow_3">
+        <di:waypoint x="940" y="300" />
+        <di:waypoint x="1010" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_smt_reject_di" bpmnElement="Flow_smt_reject">
+        <di:waypoint x="1035" y="325" />
+        <di:waypoint x="1035" y="370" />
+        <di:waypoint x="2005" y="370" />
+        <di:waypoint x="2005" y="435" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1095" y="352" width="50" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_smt_hold_di" bpmnElement="Flow_smt_hold">
+        <di:waypoint x="1035" y="325" />
+        <di:waypoint x="1035" y="370" />
+        <di:waypoint x="680" y="370" />
+        <di:waypoint x="680" y="325" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="919" y="352" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_smt_proceed_di" bpmnElement="Flow_smt_proceed">
+        <di:waypoint x="1060" y="300" />
+        <di:waypoint x="1100" y="300" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1047" y="256" width="66" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_join_preccb_di" bpmnElement="Flow_join_preccb">
+        <di:waypoint x="1150" y="300" />
+        <di:waypoint x="1200" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_7_di" bpmnElement="Flow_7">
+        <di:waypoint x="1320" y="300" />
+        <di:waypoint x="1400" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_preccb_hold_di" bpmnElement="Flow_preccb_hold">
+        <di:waypoint x="1425" y="275" />
+        <di:waypoint x="1425" y="240" />
+        <di:waypoint x="1125" y="240" />
+        <di:waypoint x="1125" y="275" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1345" y="244" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_preccb_proceed_di" bpmnElement="Flow_preccb_proceed">
+        <di:waypoint x="1425" y="325" />
+        <di:waypoint x="1425" y="460" />
+        <di:waypoint x="1500" y="460" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1447" y="380" width="66" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_preccb_reject_di" bpmnElement="Flow_preccb_reject">
+        <di:waypoint x="1450" y="300" />
+        <di:waypoint x="2005" y="300" />
+        <di:waypoint x="2005" y="435" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1463" y="278" width="50" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_10_hold_di" bpmnElement="Flow_10_hold">
+        <di:waypoint x="1805" y="435" />
+        <di:waypoint x="1805" y="410" />
+        <di:waypoint x="1525" y="410" />
+        <di:waypoint x="1525" y="435" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1634" y="386" width="62" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_7b_di" bpmnElement="Flow_7b">
+        <di:waypoint x="1550" y="460" />
+        <di:waypoint x="1600" y="460" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_8b_di" bpmnElement="Flow_8b">
+        <di:waypoint x="1720" y="460" />
+        <di:waypoint x="1780" y="460" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_11_rejected_di" bpmnElement="Flow_11_rejected">
+        <di:waypoint x="1830" y="460" />
+        <di:waypoint x="1980" y="460" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1879" y="442" width="50" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_9_approved_di" bpmnElement="Flow_9_approved">
+        <di:waypoint x="1805" y="485" />
+        <di:waypoint x="1805" y="580" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1807" y="510" width="55" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_join_implement_di" bpmnElement="Flow_join_implement">
+        <di:waypoint x="2350" y="620" />
+        <di:waypoint x="2400" y="620" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_16b_di" bpmnElement="Flow_16b">
+        <di:waypoint x="2520" y="620" />
+        <di:waypoint x="2580" y="620" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_fail_backout_di" bpmnElement="Flow_fail_backout">
+        <di:waypoint x="2885" y="325" />
+        <di:waypoint x="2885" y="580" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2841" y="549" width="89" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_17_yes_di" bpmnElement="Flow_17_yes">
+        <di:waypoint x="2605" y="645" />
+        <di:waypoint x="2605" y="940" />
+        <di:waypoint x="2680" y="940" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2597" y="922" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_20_di" bpmnElement="Flow_20">
+        <di:waypoint x="2800" y="940" />
+        <di:waypoint x="2860" y="940" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_18_no_di" bpmnElement="Flow_18_no">
+        <di:waypoint x="2605" y="595" />
+        <di:waypoint x="2605" y="325" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2598" y="307" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_val_fail_di" bpmnElement="Flow_val_fail">
+        <di:waypoint x="2885" y="965" />
+        <di:waypoint x="2885" y="990" />
+        <di:waypoint x="2560" y="990" />
+        <di:waypoint x="2560" y="300" />
+        <di:waypoint x="2580" y="300" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2530" y="972" width="61" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_fail_retry_di" bpmnElement="Flow_fail_retry">
+        <di:waypoint x="2885" y="275" />
+        <di:waypoint x="2885" y="230" />
+        <di:waypoint x="2325" y="230" />
+        <di:waypoint x="2325" y="595" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2282" y="199" width="86" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1c6a2ei_di" bpmnElement="Flow_1c6a2ei">
+        <di:waypoint x="705" y="300" />
+        <di:waypoint x="820" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0y4kpju_di" bpmnElement="Flow_0y4kpju">
+        <di:waypoint x="450" y="140" />
+        <di:waypoint x="520" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_reg_di" bpmnElement="Flow_reg">
+        <di:waypoint x="580" y="180" />
+        <di:waypoint x="580" y="300" />
+        <di:waypoint x="655" y="300" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

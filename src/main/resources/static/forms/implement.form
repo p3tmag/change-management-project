@@ -1,0 +1,32 @@
+{
+  "components": [
+    {
+      "type": "text",
+      "text": "## Informacije o promeni\n\n**ID promene:** {{changeId}}\n\n**Naslov:** {{changeTitle}}\n\n**Opis:** {{changeDescription}}\n\n**Prioritet:** {{changePriorityLabel}}",
+      "layout": {
+        "row": "Row_changeinfo",
+        "columns": null
+      },
+      "id": "Field_changeInfoDisplay"
+    },
+    {
+      "label": "Da li je implementacija uspesna?",
+      "type": "checkbox",
+      "layout": {
+        "row": "Row_implsuccess",
+        "columns": null
+      },
+      "id": "Field_implementationSuccessful",
+      "key": "implementationSuccessful"
+    }
+  ],
+  "type": "default",
+  "id": "Form_implement",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.48.0"
+  },
+  "executionPlatform": "Camunda Platform",
+  "executionPlatformVersion": "7.24.0",
+  "schemaVersion": 19
+}

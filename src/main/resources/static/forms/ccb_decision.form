@@ -1,0 +1,46 @@
+{
+  "components": [
+    {
+      "type": "text",
+      "text": "## Informacije o promeni\n\n**ID promene:** {{changeId}}\n\n**Naslov:** {{changeTitle}}\n\n**Opis:** {{changeDescription}}\n\n**Prioritet:** {{changePriorityLabel}}",
+      "layout": {
+        "row": "Row_changeinfo",
+        "columns": null
+      },
+      "id": "Field_changeInfoDisplay"
+    },
+    {
+      "label": "CCB odluka",
+      "values": [
+        {
+          "label": "Odobreno",
+          "value": "approved"
+        },
+        {
+          "label": "Odbijeno",
+          "value": "rejected"
+        },
+        {
+          "label": "Na cekanju",
+          "value": "hold"
+        }
+      ],
+      "type": "radio",
+      "layout": {
+        "row": "Row_ccbdecision",
+        "columns": null
+      },
+      "id": "Field_ccbDecision",
+      "key": "ccbDecision"
+    }
+  ],
+  "type": "default",
+  "id": "Form_ccb_decision",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.48.0"
+  },
+  "executionPlatform": "Camunda Platform",
+  "executionPlatformVersion": "7.24.0",
+  "schemaVersion": 19
+}

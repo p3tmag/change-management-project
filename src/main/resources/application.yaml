@@ -1,0 +1,30 @@
+camunda:
+  bpm:
+    admin-user:
+      id: admin
+      password: admin
+    # Ukljucena provera autorizacije: pristup i rad na zadacima je ogranicen
+    # po grupama (vidi AuthorizationSetup). Admin je superkorisnik.
+    authorization:
+      enabled: true
+    filter:
+      create: All tasks
+    generic-properties:
+      properties:
+        history-time-to-live: P180D
+
+spring:
+  datasource:
+    # PostgreSQL konekcija — pokrenuti lokalnu bazu pre startovanja aplikacije.
+    # Primer Docker komande:
+    #   docker run --name changedb -e POSTGRES_DB=changedb -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/changedb}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false

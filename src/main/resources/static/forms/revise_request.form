@@ -1,0 +1,67 @@
+{
+  "components": [
+    {
+      "type": "text",
+      "text": "**ID promene:** {{changeId}}\n\n**Razlog vracanja na doradu:**\n\n{{reworkComment}}",
+      "layout": {
+        "row": "Row_reworkcomment",
+        "columns": null
+      },
+      "id": "Field_reworkCommentDisplay"
+    },
+    {
+      "label": "Naslov promene",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_04e1l4x",
+        "columns": null
+      },
+      "id": "Field_0nu9jle",
+      "key": "changeTitle"
+    },
+    {
+      "label": "Opis promene",
+      "type": "textarea",
+      "layout": {
+        "row": "Row_079d1di",
+        "columns": null
+      },
+      "id": "Field_190d5qi",
+      "key": "changeDescription"
+    },
+    {
+      "label": "Prioritet",
+      "values": [
+        {
+          "label": "nizak",
+          "value": "low"
+        },
+        {
+          "label": "srednji",
+          "value": "medium"
+        },
+        {
+          "label": "visok",
+          "value": "high"
+        }
+      ],
+      "type": "select",
+      "layout": {
+        "row": "Row_1s8jeu1",
+        "columns": null
+      },
+      "id": "Field_1csmsv4",
+      "key": "changePriority",
+      "defaultValue": "low"
+    }
+  ],
+  "type": "default",
+  "id": "Form_revise_request",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.48.0"
+  },
+  "executionPlatform": "Camunda Platform",
+  "executionPlatformVersion": "7.24.0",
+  "schemaVersion": 19
+}

@@ -1,0 +1,60 @@
+{
+  "components": [
+    {
+      "type": "text",
+      "text": "## Informacije o promeni\n\n**ID promene:** {{changeId}}\n\n**Naslov:** {{changeTitle}}\n\n**Opis:** {{changeDescription}}\n\n**Prioritet:** {{changePriorityLabel}}",
+      "layout": {
+        "row": "Row_changeinfo",
+        "columns": null
+      },
+      "id": "Field_changeInfoDisplay"
+    },
+    {
+      "label": "Odluka tima za upravljanje uslugama",
+      "values": [
+        {
+          "label": "Spremno za pre-CCB",
+          "value": "proceed"
+        },
+        {
+          "label": "Odbij promenu",
+          "value": "reject"
+        },
+        {
+          "label": "Vrati podnosiocu na doradu",
+          "value": "rework"
+        },
+        {
+          "label": "Stavi na cekanje",
+          "value": "hold"
+        }
+      ],
+      "type": "radio",
+      "layout": {
+        "row": "Row_smtdecision",
+        "columns": null
+      },
+      "id": "Field_smtDecision",
+      "key": "smtDecision"
+    },
+    {
+      "label": "Komentar (razlog vracanja na doradu ili stavljanja na cekanje)",
+      "type": "textarea",
+      "layout": {
+        "row": "Row_smtcomment",
+        "columns": null
+      },
+      "id": "Field_reworkComment",
+      "key": "reworkComment"
+    }
+  ],
+  "type": "default",
+  "id": "Form_smt_review",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.48.0"
+  },
+  "executionPlatform": "Camunda Platform",
+  "executionPlatformVersion": "7.24.0",
+  "schemaVersion": 19
+}

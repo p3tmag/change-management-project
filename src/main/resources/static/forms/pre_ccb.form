@@ -1,0 +1,56 @@
+{
+  "components": [
+    {
+      "type": "text",
+      "text": "## Informacije o promeni\n\n**ID promene:** {{changeId}}\n\n**Naslov:** {{changeTitle}}\n\n**Opis:** {{changeDescription}}\n\n**Prioritet:** {{changePriorityLabel}}",
+      "layout": {
+        "row": "Row_changeinfo",
+        "columns": null
+      },
+      "id": "Field_changeInfoDisplay"
+    },
+    {
+      "label": "Odluka sa pre-CCB sastanka",
+      "values": [
+        {
+          "label": "Spremno za CCB",
+          "value": "proceed"
+        },
+        {
+          "label": "Odbij promenu",
+          "value": "reject"
+        },
+        {
+          "label": "Stavi na cekanje",
+          "value": "hold"
+        }
+      ],
+      "type": "radio",
+      "layout": {
+        "row": "Row_preccbdecision",
+        "columns": null
+      },
+      "id": "Field_preCcbDecision",
+      "key": "preCcbDecision"
+    },
+    {
+      "label": "Komentar",
+      "type": "textarea",
+      "layout": {
+        "row": "Row_preccbcomment",
+        "columns": null
+      },
+      "id": "Field_preCcbComment",
+      "key": "preCcbComment"
+    }
+  ],
+  "type": "default",
+  "id": "Form_pre_ccb",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.48.0"
+  },
+  "executionPlatform": "Camunda Platform",
+  "executionPlatformVersion": "7.24.0",
+  "schemaVersion": 19
+}
